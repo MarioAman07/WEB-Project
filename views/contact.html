@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/search?q=tokyo">Search</a>
+        <a href="/item/1">Item</a>
+        <a href="/api/info">API Info</a>
+    </nav>
+    <section>
+        <h2>Contact Our Team</h2>
+        <p>Have questions about your itinerary? Sabina, Aiym, Aman, and Alibek are here to help!</p>
+        
+        <form action="/contact" method="POST" class="contact-form">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" placeholder="e.g. John Doe" required>
+
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="john@example.com" required>
+    
+            <label for="message">Your Message</label>
+            <textarea id="message" name="message" rows="6" placeholder="Tell us about your dream trip..." required></textarea>
+    
+            <button type="submit">Send Message</button>
+        </form>
+    </section>
+    <footer>
+        <div class="footer-text">
+            <h2>Get in touch with us</h2>
+        </div>
+    </footer>
+</body>
+</html>
