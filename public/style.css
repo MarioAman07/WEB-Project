@@ -1,6 +1,7 @@
-
-/* Основной стиль для всего сайта */
-body {
+/* =========================================
+   ОСНОВНОЙ СТИЛЬ (MAIN STYLES)
+   ========================================= */
+   body {
     font-family: 'Arial', sans-serif;
     background-color: #b2e0f4;
     color: #22394f;
@@ -25,7 +26,7 @@ nav a {
     transition: color 0.3s ease;
 }
 nav a:hover {
-    color: #ff4081;  /* Подсветка ссылки при наведении */
+    color: #ff4081;
 }
 
 /* Заголовок */
@@ -49,14 +50,9 @@ header p {
     font-weight: 300;
 }
 
-/* Анимация для заголовков */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Секции */
@@ -97,10 +93,10 @@ h2 {
 }
 
 .filter-buttons button:hover {
-    background-color: #ff4081;  /* Подсветка кнопок при наведении */
+    background-color: #ff4081;
 }
 
-/* Сеточный контейнер для карточек */
+/* Сетка карточек */
 .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -108,13 +104,14 @@ h2 {
     margin-top: 20px;
 }
 
-/* Карточки с изображениями */
+/* Карточки */
 .card {
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+    background-color: #fff;
 }
 
 .card:hover {
@@ -126,7 +123,7 @@ h2 {
     width: 100%;
     height: 200px;
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: 5px 5px 0 0;
 }
 
 .card-content {
@@ -146,7 +143,6 @@ h2 {
     margin: 10px 0;
 }
 
-/* Кнопка для сохранения */
 .card button {
     background-color: #ff4081;
     color: white;
@@ -160,20 +156,14 @@ h2 {
 }
 
 .card button:hover {
-    background-color: #f50057;  /* Изменение цвета кнопки при наведении */
+    background-color: #f50057;
 }
 
-/* Секция избранных мест */
+/* Избранное */
 .favorites-section {
     background-color: #f9f9f9;
     padding: 20px;
     border-radius: 8px;
-}
-
-.favorites-section h2 {
-    font-size: 2rem;
-    color: #00344a;
-    margin-bottom: 20px;
 }
 
 .favorites-section .card {
@@ -181,21 +171,24 @@ h2 {
     border: 1px solid #ddd;
 }
 
-/* Стиль для футера */
+/* Футер */
 footer {
     background-image: url('/images/travel.png');
-    background-size: cover; /* Фон будет растягиваться на весь размер */
-    background-position: center; /* Центрируем изображение */
+    background-size: cover;
+    background-position: center;
     color: white;
     text-align: center;
-    padding: 100px 0; /* Увеличиваем отступы, чтобы изображение было заметным */
+    padding: 100px 0;
     position: relative;
+    /* Если картинки нет, зададим цвет фона */
+    background-color: #0099cc; 
 }
 
 .footer-text {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 20px;
     border-radius: 8px;
+    display: inline-block;
 }
 
 .footer-text h2 {
@@ -204,7 +197,9 @@ footer {
     font-size: 2rem;
 }
 
-/* Контактная форма */
+/* =========================================
+   ФОРМЫ И КОНТАКТЫ (FORMS)
+   ========================================= */
 .contact-form {
     display: flex;
     flex-direction: column;
@@ -217,7 +212,6 @@ footer {
     color: #00344a;
     margin-bottom: 5px;
 }
-
 
 .contact-form input, 
 .contact-form textarea {
@@ -254,6 +248,145 @@ footer {
     transform: translateY(-2px);
 }
 
-.contact-form button:active {
-    transform: translateY(0);
+/* =========================================
+   СТРАНИЦА ТЕСТОВ / АДМИНКА (API TEST PAGE)
+   ========================================= */
+.container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 20px; 
+}
+
+.panel { 
+    background-color: #e3f2fd; 
+    border: 2px solid #90caf9; 
+    border-radius: 10px; 
+    padding: 20px; 
+    margin-bottom: 20px; 
+}
+
+.panel h2 { 
+    margin-top: 0; 
+    color: #00344a; 
+    border-bottom: 1px solid #ccc; 
+    padding-bottom: 10px; 
+}
+
+.form-row { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 15px; 
+    flex-wrap: wrap; 
+}
+
+/* Стили инпутов для админки */
+.panel input, 
+.panel select,
+.form-row input,
+.form-row select { 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
+    flex: 1; 
+}
+
+/* Кнопки админки */
+.panel button, 
+.container header button { 
+    padding: 10px 15px; 
+    border: none; 
+    cursor: pointer; 
+    border-radius: 5px; 
+    font-weight: bold; 
+    color: white; 
+    transition: 0.2s;
+}
+
+.panel button:hover,
+.container header button:hover { 
+    opacity: 0.9; 
+}
+
+.btn-create { background-color: #0077b3; }
+.btn-lab { background-color: #4caf50; } 
+.btn-update { background-color: #ffbb33; color: black !important; display: none; }
+.btn-cancel { background-color: #999; display: none; }
+.btn-delete-all { background-color: #d32f2f; float: right; }
+
+/* Таблица данных */
+.table-container { 
+    overflow-x: auto; 
+    margin-bottom: 30px; 
+}
+
+table.data-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background: white; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+}
+
+table.data-table th, 
+table.data-table td { 
+    padding: 10px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; 
+}
+
+table.data-table th { 
+    background-color: #00344a; 
+    color: white; 
+}
+
+/* Лаборатория JSON */
+.lab-panel { 
+    background-color: #2d2d2d; 
+    color: #00ff00; 
+    padding: 15px; 
+    border-radius: 8px; 
+    font-family: monospace; 
+    min-height: 100px; 
+    max-height: 300px; 
+    overflow-y: auto; 
+    white-space: pre-wrap; 
+}
+
+/* =========================================
+   ОТЗЫВЫ (REVIEWS SECTION)
+   ========================================= */
+.reviews-section {
+    margin-top: 30px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.review {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+}
+
+.review-form input, 
+.review-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box; /* Чтобы padding не ломал ширину */
+}
+
+.review-form button {
+    background-color: #005f7f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.review-form button:hover {
+    background-color: #003f5f;
 }
