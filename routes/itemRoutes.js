@@ -1,117 +1,92 @@
+// routes/itemRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getDb } = require('../database/connection');
-const { ObjectId } = require('mongodb');
+const Destination = require('../models/Destination'); // Переходим на mongoose модель
+const { body, validationResult } = require('express-validator'); // Для валидации
+const isAuthenticated = require('../middleware/auth'); // Новый middleware, см. ниже
 
 // 1. GET ALL (с Сортировкой и Проекцией)
 router.get('/', async (req, res) => {
     try {
-        const db = getDb();
         const { category, sort, fields } = req.query; // Получаем параметры из ссылки
-
         let query = {};
         if (category) query.category = category;
-
-        let cursor = db.collection('destinations').find(query);
-
+        let findQuery = Destination.find(query);
         // --- ЛОГИКА СОРТИРОВКИ (SORTING) ---
         if (sort) {
-            // Если sort=name, сортируем по name по возрастанию (1)
-            cursor = cursor.sort({ [sort]: 1 });
+            findQuery = findQuery.sort({ [sort]: 1 });
         }
-
         // --- ЛОГИКА ПРОЕКЦИИ (PROJECTION) ---
         if (fields) {
-            // Если fields=name,category -> превращаем в объект { name: 1, category: 1 }
-            const projection = {};
-            fields.split(',').forEach(f => projection[f.trim()] = 1);
-            cursor = cursor.project(projection);
+            const projection = fields.split(',').reduce((acc, f) => { acc[f.trim()] = 1; return acc; }, {});
+            findQuery = findQuery.select(projection);
         }
-
-        const results = await cursor.toArray();
+        const results = await findQuery.exec();
         res.status(200).json(results);
     } catch (err) {
         res.status(500).json({ error: "Database error" });
     }
 });
-
 // 2. GET BY ID (Получение одной записи)
 router.get('/:id', async (req, res) => {
     try {
-        const db = getDb();
-        // Проверяем, валидный ли ID
-        if (!ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({ error: "Invalid ID format" });
-        }
-
-        // Ищем конкретную запись по _id
-        const item = await db.collection('destinations').findOne({ _id: new ObjectId(req.params.id) });
-        
+        const item = await Destination.findById(req.params.id);
         if (!item) return res.status(404).json({ error: "Not found" });
-        
         res.status(200).json(item);
     } catch (err) {
         res.status(500).json({ error: "Server error" });
     }
 });
-
-// POST (Оставляем как есть)
-router.post('/', async (req, res) => {
+// 3. POST (Оставляем как есть + валидация + auth)
+router.post('/', isAuthenticated, [
+  body('name').trim().notEmpty().withMessage('Name required'),
+  body('category').trim().notEmpty().withMessage('Category required'),
+  body('description').optional().trim(),
+  body('img').optional().trim(),
+  body('location').optional().trim(),
+  body('price').optional().isNumeric(),
+  body('rating').optional().isNumeric(),
+  body('activities').optional().isArray()
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     try {
-        const { name, category, description, img } = req.body;
-        if (!name || !category) return res.status(400).json({ error: "Missing fields" });
-
-        const newItem = {
-            name, category, description, img, createdAt: new Date()
-        };
-        const db = getDb();
-        const result = await db.collection('destinations').insertOne(newItem);
-        res.status(201).json({ _id: result.insertedId, ...newItem });
+        const newItem = new Destination(req.body);
+        const savedItem = await newItem.save();
+        res.status(201).json(savedItem);
     } catch (err) {
         res.status(500).json({ error: "Error creating" });
     }
 });
-
-// PUT /api/items/:id - Теперь обновляет ВСЕ поля
-router.put('/:id', async (req, res) => {
+// 4. PUT /api/items/:id - Обновление + валидация + auth
+router.put('/:id', isAuthenticated, [
+  body('name').optional().trim().notEmpty(),
+  body('category').optional().trim().notEmpty(),
+  // Добавь для других полей
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     try {
-        const db = getDb();
-        // Убираем _id из тела запроса, чтобы не было ошибки (id менять нельзя)
-        const { _id, ...updates } = req.body; 
-
-        const result = await db.collection('destinations').updateOne(
-            { _id: new ObjectId(req.params.id) },
-            { $set: updates } // Обновляем все поля, которые пришли
-        );
-
-        if (result.matchedCount === 0) return res.status(404).json({ error: "Not found" });
-        res.status(200).json({ message: "Updated" });
+        const updates = req.body;
+        const result = await Destination.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
+        if (!result) return res.status(404).json({ error: "Not found" });
+        res.status(200).json(result);
     } catch (err) {
         res.status(500).json({ error: "Update failed" });
     }
 });
-
-// DELETE /api/items/all - НОВЫЙ МАРШРУТ ДЛЯ УДАЛЕНИЯ ВСЕГО
-router.delete('/all', async (req, res) => {
+// 5. DELETE /api/items/:id (Удаление одного) + auth
+router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
-        const db = getDb();
-        await db.collection('destinations').deleteMany({}); // Удаляет всё
-        res.status(200).json({ message: "All items deleted" });
-    } catch (err) {
-        res.status(500).json({ error: "Delete all failed" });
-    }
-});
-
-// DELETE /api/items/:id (Удаление одного)
-router.delete('/:id', async (req, res) => {
-    try {
-        const db = getDb();
-        const result = await db.collection('destinations').deleteOne({ _id: new ObjectId(req.params.id) });
-        if (result.deletedCount === 0) return res.status(404).json({ error: "Not found" });
+        const result = await Destination.findByIdAndDelete(req.params.id);
+        if (!result) return res.status(404).json({ error: "Not found" });
         res.status(200).json({ message: "Deleted" });
     } catch (err) {
         res.status(500).json({ error: "Delete failed" });
     }
 });
-
 module.exports = router;

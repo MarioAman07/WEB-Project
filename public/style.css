@@ -1,5 +1,91 @@
+/* public/style.css */
 /* =========================================
-   ОСНОВНОЙ СТИЛЬ (MAIN STYLES)
+   ОСНОВНОЙ СТИЛЬ (MAIN STYLES) и также есть папка images с изображением. дальше папка routes:itemRoutes.js:const express = require('express');
+const router = express.Router();
+const { getDb } = require('../database/connection');
+const { ObjectId } = require('mongodb');
+// 1. GET ALL (с Сортировкой и Проекцией)
+router.get('/', async (req, res) => {
+    try {
+        const db = getDb();
+        const { category, sort, fields } = req.query; // Получаем параметры из ссылки
+        let query = {};
+        if (category) query.category = category;
+        let cursor = db.collection('destinations').find(query);
+        // --- ЛОГИКА СОРТИРОВКИ (SORTING) ---
+        if (sort) {
+            cursor = cursor.sort({ [sort]: 1 });
+        }
+        // --- ЛОГИКА ПРОЕКЦИИ (PROJECTION) ---
+        if (fields) {
+            const projection = {};
+            fields.split(',').forEach(f => projection[f.trim()] = 1);
+            cursor = cursor.project(projection);
+        }
+        const results = await cursor.toArray();
+        res.status(200).json(results);
+    } catch (err) {
+        res.status(500).json({ error: "Database error" });
+    }
+});
+// 2. GET BY ID (Получение одной записи)
+router.get('/:id', async (req, res) => {
+    try {
+        const db = getDb();
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ error: "Invalid ID format" });
+        }
+        const item = await db.collection('destinations').findOne({ _id: new ObjectId(req.params.id) });
+       
+        if (!item) return res.status(404).json({ error: "Not found" });
+       
+        res.status(200).json(item);
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
+// 3. POST (Оставляем как есть)
+router.post('/', async (req, res) => {
+    try {
+        const { name, category, description, img } = req.body;
+        if (!name || !category) return res.status(400).json({ error: "Missing fields" });
+        const newItem = {
+            name, category, description, img, createdAt: new Date()
+        };
+        const db = getDb();
+        const result = await db.collection('destinations').insertOne(newItem);
+        res.status(201).json({ _id: result.insertedId, ...newItem });
+    } catch (err) {
+        res.status(500).json({ error: "Error creating" });
+    }
+});
+// 4. PUT /api/items/:id - Обновление
+router.put('/:id', async (req, res) => {
+    try {
+        const db = getDb();
+        const { _id, ...updates } = req.body;
+        const result = await db.collection('destinations').updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { $set: updates }
+        );
+        if (result.matchedCount === 0) return res.status(404).json({ error: "Not found" });
+        res.status(200).json({ message: "Updated" });
+    } catch (err) {
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+// 5. DELETE /api/items/:id (Удаление одного)
+router.delete('/:id', async (req, res) => {
+    try {
+        const db = getDb();
+        const result = await db.collection('destinations').deleteOne({ _id: new ObjectId(req.params.id) });
+        if (result.deletedCount === 0) return res.status(404).json({ error: "Not found" });
+        res.status(200).json({ message: "Deleted" });
+    } catch (err) {
+        res.status(500).json({ error: "Delete failed" });
+    }
+});
+module.exports = router;
    ========================================= */
    body {
     font-family: 'Arial', sans-serif;
@@ -9,7 +95,6 @@
     padding: 0;
     line-height: 1.6;
 }
-
 /* Навигация */
 nav {
     background-color: #00344a;
@@ -28,7 +113,6 @@ nav a {
 nav a:hover {
     color: #ff4081;
 }
-
 /* Заголовок */
 header {
     background-color: #98ddfa;
@@ -38,23 +122,19 @@ header {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-bottom: 5px solid #00344a;
 }
-
 header h1 {
     font-size: 3rem;
     margin-bottom: 10px;
     animation: fadeIn 2s ease-out;
 }
-
 header p {
     font-size: 1.3rem;
     font-weight: 300;
 }
-
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
 /* Секции */
 section {
     padding: 20px;
@@ -64,22 +144,18 @@ section {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: box-shadow 0.3s ease;
 }
-
 section:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
-
 h2 {
     font-size: 2rem;
     color: #00344a;
 }
-
 /* Фильтры категорий */
 .filter-buttons {
     text-align: center;
     margin-bottom: 20px;
 }
-
 .filter-buttons button {
     padding: 10px 20px;
     margin: 5px;
@@ -91,11 +167,9 @@ h2 {
     border-radius: 5px;
     transition: background-color 0.3s ease;
 }
-
 .filter-buttons button:hover {
     background-color: #ff4081;
 }
-
 /* Сетка карточек */
 .grid-container {
     display: grid;
@@ -103,7 +177,6 @@ h2 {
     gap: 20px;
     margin-top: 20px;
 }
-
 /* Карточки */
 .card {
     border-radius: 15px;
@@ -113,36 +186,30 @@ h2 {
     cursor: pointer;
     background-color: #fff;
 }
-
 .card:hover {
     transform: scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
-
 .card img {
     width: 100%;
     height: 200px;
     object-fit: cover;
     border-radius: 5px 5px 0 0;
 }
-
 .card-content {
     padding: 15px;
     background-color: #fff;
     text-align: center;
 }
-
 .card h3 {
     font-size: 1.6em;
     color: #333;
 }
-
 .card p {
     color: #666;
     font-size: 1.2em;
     margin: 10px 0;
 }
-
 .card button {
     background-color: #ff4081;
     color: white;
@@ -154,23 +221,19 @@ h2 {
     margin-top: 10px;
     transition: background-color 0.3s ease;
 }
-
 .card button:hover {
     background-color: #f50057;
 }
-
 /* Избранное */
 .favorites-section {
     background-color: #f9f9f9;
     padding: 20px;
     border-radius: 8px;
 }
-
 .favorites-section .card {
     background-color: #fafafa;
     border: 1px solid #ddd;
 }
-
 /* Футер */
 footer {
     background-image: url('/images/travel.png');
@@ -181,22 +244,19 @@ footer {
     padding: 100px 0;
     position: relative;
     /* Если картинки нет, зададим цвет фона */
-    background-color: #0099cc; 
+    background-color: #0099cc;
 }
-
 .footer-text {
     background-color: rgba(0, 0, 0, 0.5);
     padding: 20px;
     border-radius: 8px;
     display: inline-block;
 }
-
 .footer-text h2 {
     color: white;
     margin: 0;
     font-size: 2rem;
 }
-
 /* =========================================
    ФОРМЫ И КОНТАКТЫ (FORMS)
    ========================================= */
@@ -206,14 +266,12 @@ footer {
     max-width: 600px;
     margin: 20px auto;
 }
-
 .contact-form label {
     font-weight: bold;
     color: #00344a;
     margin-bottom: 5px;
 }
-
-.contact-form input, 
+.contact-form input,
 .contact-form textarea {
     padding: 12px;
     margin-bottom: 20px;
@@ -223,14 +281,12 @@ footer {
     font-family: inherit;
     transition: border-color 0.3s ease;
 }
-
-.contact-form input:focus, 
+.contact-form input:focus,
 .contact-form textarea:focus {
     outline: none;
     border-color: #00344a;
     box-shadow: 0 0 8px rgba(152, 221, 250, 0.5);
 }
-
 .contact-form button {
     background-color: #00344a;
     color: white;
@@ -242,115 +298,100 @@ footer {
     cursor: pointer;
     transition: transform 0.2s, background-color 0.3s;
 }
-
 .contact-form button:hover {
     background-color: #22394f;
     transform: translateY(-2px);
 }
-
 /* =========================================
    СТРАНИЦА ТЕСТОВ / АДМИНКА (API TEST PAGE)
    ========================================= */
-.container { 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    padding: 20px; 
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
-
-.panel { 
-    background-color: #e3f2fd; 
-    border: 2px solid #90caf9; 
-    border-radius: 10px; 
-    padding: 20px; 
-    margin-bottom: 20px; 
+.panel {
+    background-color: #e3f2fd;
+    border: 2px solid #90caf9;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
 }
-
-.panel h2 { 
-    margin-top: 0; 
-    color: #00344a; 
-    border-bottom: 1px solid #ccc; 
-    padding-bottom: 10px; 
+.panel h2 {
+    margin-top: 0;
+    color: #00344a;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
 }
-
-.form-row { 
-    display: flex; 
-    gap: 10px; 
-    margin-bottom: 15px; 
-    flex-wrap: wrap; 
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
-
 /* Стили инпутов для админки */
-.panel input, 
+.panel input,
 .panel select,
 .form-row input,
-.form-row select { 
-    padding: 10px; 
-    border: 1px solid #ccc; 
-    border-radius: 5px; 
-    flex: 1; 
+.form-row select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    flex: 1;
 }
-
 /* Кнопки админки */
-.panel button, 
-.container header button { 
-    padding: 10px 15px; 
-    border: none; 
-    cursor: pointer; 
-    border-radius: 5px; 
-    font-weight: bold; 
-    color: white; 
+.panel button,
+.container header button {
+    padding: 10px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
     transition: 0.2s;
 }
-
 .panel button:hover,
-.container header button:hover { 
-    opacity: 0.9; 
+.container header button:hover {
+    opacity: 0.9;
 }
-
 .btn-create { background-color: #0077b3; }
-.btn-lab { background-color: #4caf50; } 
+.btn-lab { background-color: #4caf50; }
 .btn-update { background-color: #ffbb33; color: black !important; display: none; }
 .btn-cancel { background-color: #999; display: none; }
 .btn-delete-all { background-color: #d32f2f; float: right; }
-
 /* Таблица данных */
-.table-container { 
-    overflow-x: auto; 
-    margin-bottom: 30px; 
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 30px;
 }
-
-table.data-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    background: white; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-
-table.data-table th, 
-table.data-table td { 
-    padding: 10px; 
-    text-align: left; 
-    border-bottom: 1px solid #ddd; 
+table.data-table th,
+table.data-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
 }
-
-table.data-table th { 
-    background-color: #00344a; 
-    color: white; 
+table.data-table th {
+    background-color: #00344a;
+    color: white;
 }
-
 /* Лаборатория JSON */
-.lab-panel { 
-    background-color: #2d2d2d; 
-    color: #00ff00; 
-    padding: 15px; 
-    border-radius: 8px; 
-    font-family: monospace; 
-    min-height: 100px; 
-    max-height: 300px; 
-    overflow-y: auto; 
-    white-space: pre-wrap; 
+.lab-panel {
+    background-color: #2d2d2d;
+    color: #00ff00;
+    padding: 15px;
+    border-radius: 8px;
+    font-family: monospace;
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
 }
-
 /* =========================================
    ОТЗЫВЫ (REVIEWS SECTION)
    ========================================= */
@@ -360,15 +401,13 @@ table.data-table th {
     padding: 20px;
     border-radius: 10px;
 }
-
 .review {
     margin-bottom: 15px;
     padding: 10px;
     background-color: #e9ecef;
     border-radius: 8px;
 }
-
-.review-form input, 
+.review-form input,
 .review-form textarea {
     width: 100%;
     padding: 10px;
@@ -377,7 +416,6 @@ table.data-table th {
     border-radius: 5px;
     box-sizing: border-box; /* Чтобы padding не ломал ширину */
 }
-
 .review-form button {
     background-color: #005f7f;
     color: white;
@@ -386,7 +424,6 @@ table.data-table th {
     border-radius: 5px;
     cursor: pointer;
 }
-
 .review-form button:hover {
     background-color: #003f5f;
 }
