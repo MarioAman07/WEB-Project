@@ -1,3 +1,4 @@
+<!-- views/test.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,6 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-
     <nav>
         <a href="/">Home</a>
         <a href="/about">About</a>
@@ -14,15 +14,16 @@
         <a href="/search?q=tokyo">Search</a>
         <a href="/item/1">Item</a>
         <a href="/api/info">API Info</a>
-        <a href="/test">API Test Page</a> 
+        <a href="/test">API Test Page</a>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        <button onclick="logout()">Logout</button>
     </nav>
-
     <div class="container">
         <header style="border:none; box-shadow:none; padding:0; display:flex; justify-content:space-between; align-items:center;">
             <h1>API Defense & Admin Panel</h1>
             <button class="btn-delete-all" onclick="deleteAll()">⚠️ DELETE ALL</button>
         </header>
-
         <section class="panel">
             <h2 id="form-title">1. Create / Update</h2>
             <div class="form-row">
@@ -38,24 +39,29 @@
                 <input type="text" id="p-desc" placeholder="Description">
                 <input type="text" id="p-img" placeholder="Image URL">
             </div>
+            <div class="form-row"> <!-- Добавили новые поля -->
+                <input type="text" id="p-location" placeholder="Location">
+                <input type="number" id="p-price" placeholder="Price">
+            </div>
+            <div class="form-row">
+                <input type="number" id="p-rating" placeholder="Rating (1-5)">
+                <input type="text" id="p-activities" placeholder="Activities (comma separated)">
+            </div>
             <button id="btn-submit" class="btn-create" onclick="handleFormSubmit()">Create (POST)</button>
             <button id="btn-cancel" class="btn-cancel" onclick="resetForm()">Cancel</button>
         </section>
-
         <section class="panel" style="background-color: #fff3e0; border-color: #ffe0b2;">
             <h2>2. API Laboratory (Test Specific Requirements)</h2>
             <p>Use this section to prove specific grading criteria.</p>
-            
+           
             <div class="form-row">
                 <input type="text" id="test-id" placeholder="Paste ID here to test GET /:id">
                 <button class="btn-lab" onclick="testGetById()">Test GET By ID</button>
             </div>
-
             <div class="form-row">
                 <input type="text" id="test-fields" value="name,category" placeholder="Fields (e.g. name,category)">
                 <button class="btn-lab" onclick="testProjection()">Test Projection</button>
             </div>
-
              <div class="form-row">
                 <select id="test-sort">
                     <option value="name">Sort by Name</option>
@@ -63,10 +69,8 @@
                 </select>
                 <button class="btn-lab" onclick="testSort()">Test Sorting</button>
             </div>
-
             <div id="json-output" class="lab-panel">// JSON Result will appear here...</div>
         </section>
-
         <section>
             <h2>3. Database Overview (GET All)</h2>
             <div class="table-container">
@@ -74,17 +78,20 @@
             </div>
         </section>
     </div>
-
     <script>
         let currentEditingId = null;
-
+        // Добавляем функцию проверки аутентификации
+        async function checkAuth() {
+          const res = await fetch('/check-auth');
+          const data = await res.json();
+          return data.authenticated;
+        }
         // --- ЛОГИКА ТЕСТОВ (LABORATORY) ---
-
         // 1. Test GET /api/items/:id
         async function testById() {
             const id = document.getElementById('test-id').value.trim();
             if(!id) return alert("Paste an ID first!");
-            
+           
             showJson("Loading...");
             try {
                 const res = await fetch(`/api/items/${id}`);
@@ -92,7 +99,6 @@
                 showJson(data);
             } catch(e) { showJson({error: e.message}); }
         }
-
         // 2. Test GET /api/items?fields=... (Projection)
         async function testProjection() {
             const fields = document.getElementById('test-fields').value.trim();
@@ -103,7 +109,6 @@
                 showJson(data);
             } catch(e) { showJson({error: e.message}); }
         }
-
         // 3. Test GET /api/items?sort=... (Sorting)
         async function testSort() {
             const sort = document.getElementById('test-sort').value;
@@ -114,12 +119,12 @@
                 showJson(data);
             } catch(e) { showJson({error: e.message}); }
         }
-        
+       
         // 4. Test GET By ID
         async function testGetById() {
              const id = document.getElementById('test-id').value.trim();
             if(!id) return alert("Paste an ID first!");
-            
+           
             showJson(`Requesting: /api/items/${id}`);
             try {
                 const res = await fetch(`/api/items/${id}`);
@@ -127,28 +132,22 @@
                 showJson(data);
             } catch(e) { showJson({error: e.message}); }
         }
-
         function showJson(data) {
             document.getElementById('json-output').innerText = JSON.stringify(data, null, 2);
         }
-
-
         // --- ОБЫЧНАЯ ЛОГИКА (ТАБЛИЦА И CRUD) ---
-
         async function loadData() {
             const container = document.getElementById('output');
             try {
                 const res = await fetch('/api/items');
                 const data = await res.json();
-                
+               
                 if (data.length === 0) {
                     container.innerHTML = '<p>Empty Database</p>'; return;
                 }
-
                 let html = `<table class="data-table"><thead><tr>
                     <th>City</th><th>Cat</th><th>ID (Copy this for tests)</th><th>Actions</th>
                     </tr></thead><tbody>`;
-
                 data.forEach(item => {
                     const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
                     html += `<tr>
@@ -165,64 +164,104 @@
                 container.innerHTML = html;
             } catch (err) { console.error(err); }
         }
-
         async function handleFormSubmit() {
+            if (!(await checkAuth())) {
+              alert('Please log in to perform write operations');
+              window.location.href = '/login';
+              return;
+            }
             const data = {
                 name: document.getElementById('p-name').value,
                 category: document.getElementById('p-category').value,
                 description: document.getElementById('p-desc').value,
-                img: document.getElementById('p-img').value
+                img: document.getElementById('p-img').value,
+                location: document.getElementById('p-location').value,
+                price: parseFloat(document.getElementById('p-price').value) || undefined,
+                rating: parseFloat(document.getElementById('p-rating').value) || undefined,
+                activities: document.getElementById('p-activities').value.split(',').map(a => a.trim()) || undefined
             };
             if (!data.name) return alert("Name required");
-
-            if (currentEditingId) {
-                await fetch(`/api/items/${currentEditingId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
-            } else {
-                await fetch('/api/items', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+            try {
+              let res;
+              if (currentEditingId) {
+                res = await fetch(`/api/items/${currentEditingId}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+              } else {
+                res = await fetch('/api/items', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+              }
+              if (!res.ok) throw new Error(await res.text());
+              resetForm(); loadData();
+            } catch (err) {
+              alert(err.message);
             }
-            resetForm(); loadData();
         }
-
         function startEdit(item) {
             currentEditingId = item._id;
             document.getElementById('p-name').value = item.name;
             document.getElementById('p-category').value = item.category;
             document.getElementById('p-desc').value = item.description || "";
             document.getElementById('p-img').value = item.img || "";
-            
+            document.getElementById('p-location').value = item.location || "";
+            document.getElementById('p-price').value = item.price || "";
+            document.getElementById('p-rating').value = item.rating || "";
+            document.getElementById('p-activities').value = item.activities ? item.activities.join(', ') : "";
+           
             document.getElementById('btn-submit').innerText = "Save (PUT)";
             document.getElementById('btn-submit').className = "btn-update";
             document.getElementById('btn-submit').style.display = "inline-block";
             document.getElementById('btn-cancel').style.display = "inline-block";
-            
+           
             // Также копируем ID в поле теста для удобства
             document.getElementById('test-id').value = item._id;
         }
-
         function resetForm() {
             currentEditingId = null;
             document.getElementById('p-name').value = '';
             document.getElementById('p-desc').value = '';
             document.getElementById('p-img').value = '';
+            document.getElementById('p-location').value = '';
+            document.getElementById('p-price').value = '';
+            document.getElementById('p-rating').value = '';
+            document.getElementById('p-activities').value = '';
             document.getElementById('btn-submit').innerText = "Create (POST)";
             document.getElementById('btn-submit').className = "btn-create";
             document.getElementById('btn-cancel').style.display = "none";
         }
-
         async function deleteItem(id) {
-            if(confirm('Delete?')) { await fetch(`/api/items/${id}`, { method: 'DELETE' }); loadData(); }
+            if (!(await checkAuth())) {
+              alert('Please log in');
+              window.location.href = '/login';
+              return;
+            }
+            if(confirm('Delete?')) { 
+              const res = await fetch(`/api/items/${id}`, { method: 'DELETE' }); 
+              if (!res.ok) alert(await res.text());
+              loadData(); 
+            }
         }
-        
+       
         async function deleteAll() {
-            if(prompt("Type DELETE") === 'DELETE') { await fetch('/api/items/all', { method: 'DELETE' }); loadData(); }
+            if (!(await checkAuth())) {
+              alert('Please log in');
+              return;
+            }
+            if(prompt("Type DELETE") === 'DELETE') { 
+              // Для delete all добавим роут в server.js, но здесь симулируем по ID
+              const data = await (await fetch('/api/items')).json();
+              for (let item of data) {
+                await fetch(`/api/items/${item._id}`, { method: 'DELETE' });
+              }
+              loadData(); 
+            }
         }
-
         function copyId(id) {
             document.getElementById('test-id').value = id;
             alert("ID copied to Laboratory box: " + id);
         }
-
         loadData();
+        async function logout() {
+          const res = await fetch('/logout', { method: 'POST' });
+          if (res.ok) window.location.href = '/';
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,63 @@
+<!-- views/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <a href="/search?q=tokyo">Search</a>
+        <a href="/item/1">Item</a>
+        <a href="/api/info">API Info</a>
+        <a href="/test">API Test Page</a>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+        <button onclick="logout()">Logout</button>
+    </nav>
+    <section>
+        <h2>Login to Your Account</h2>
+        <p>Enter your username and password to log in.</p>
+       
+        <form id="loginForm" class="contact-form"> <!-- Изменено на JS submit -->
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" placeholder="e.g. JohnDoe" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" placeholder="******" required>
+   
+            <button type="submit">Login</button>
+        </form>
+    </section>
+    <footer>
+        <div class="footer-text">
+            <h2>Welcome back!</h2>
+        </div>
+    </footer>
+    <script>
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        if (res.ok) {
+          alert('Logged in');
+          window.location.href = '/test';
+        } else {
+          alert(await res.text());
+        }
+      });
+      async function logout() {
+        const res = await fetch('/logout', { method: 'POST' });
+        if (res.ok) window.location.href = '/';
+      }
+    </script>
+</body>
+</html>
