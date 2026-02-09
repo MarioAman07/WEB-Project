@@ -2,148 +2,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Planner - Destinations</title>
-    <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Planner - Destinations</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        <a href="/search?q=tokyo">Search</a>
-        <a href="/item/1">Item</a>
-        <a href="/api/info">API Info</a>
-        <a href="/test">API Test Page</a>
-        <a href="/login">Login</a>
-        <a href="/register">Register</a>
-        <button onclick="logout()">Logout</button>
-    </nav>
-    <header>
-        <h1>Travel Planner</h1>
-        <p>Explore destinations and plan your next adventure.</p>
-    </header>
-<section>
-        <h2>Browse Destinations</h2>
-        <div class="filter-buttons">
-            <button onclick="filterDestinations('all')">All</button>
-            <button onclick="filterDestinations('Europe')">Europe</button>
-            <button onclick="filterDestinations('Asia')">Asia</button>
-            <button onclick="filterDestinations('America')">America</button>
-        </div>
-        <div id="destinations-grid" class="grid-container"></div>
-    </section>
-    <section id="favorites-section" class="favorites-section">
-        <h2>My Favorite Destinations</h2>
-        <div id="favorites-grid" class="grid-container"></div>
-    </section>
-    <section id="reviews-section" class="reviews-section">
-        <h2>Traveler Reviews</h2>
-        <div id="reviews-container"></div>
-        <div class="review-form">
-            <h3>Share your experience:</h3>
-            <input type="text" id="reviewer-name" placeholder="Your Name" required>
-            <textarea id="review-text" placeholder="Write your review..." rows="4" required></textarea>
-            <button onclick="submitReview()">Submit Review</button>
-        </div>
-    </section>
-    <footer>
-        <div class="footer-text">
-            <h2>Worldwide Group Tours & European River Cruises</h2>
-            <p>2026 Christmas market river cruises now available to book.</p>
-        </div>
-    </footer>
-    <script>
-        const destinations = [
-            { id: 1, name: 'Paris', category: 'Europe', img: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=300', desc: 'The city of lights and love.' },
-            { id: 2, name: 'Tokyo', category: 'Asia', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=300', desc: 'A neon-lit metropolis.' },
-            { id: 3, name: 'New York', category: 'America', img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=300', desc: 'The city that never sleeps.' },
-            { id: 4, name: 'Rome', category: 'Europe', img: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=300', desc: 'The eternal city with ancient history.' }
-        ];
-        let favorites = JSON.parse(localStorage.getItem('favs')) || [];
-        let reviews = JSON.parse(localStorage.getItem('reviews')) || [];
-        function renderDestinations(filter = 'all') {
-            const grid = document.getElementById('destinations-grid');
-            grid.innerHTML = '';
-            const filtered = filter === 'all' ? destinations : destinations.filter(d => d.category === filter);
-           
-            filtered.forEach(d => {
-                grid.innerHTML += `
-                    <div class="card">
-                        <img src="${d.img}" alt="${d.name}">
-                        <div class="card-content">
-                            <h3>${d.name}</h3>
-                            <p>${d.category}</p>
-                            <p>${d.desc}</p>
-                            <button onclick="addToFavorites(${d.id})">❤ Save</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        function filterDestinations(cat) {
-            renderDestinations(cat);
-        }
-        function addToFavorites(id) {
-            const item = destinations.find(d => d.id === id);
-            if (!favorites.find(f => f.id === id)) {
-                favorites.push(item);
-                localStorage.setItem('favs', JSON.stringify(favorites));
-                renderFavorites();
-            }
-        }
-        function removeFromFavorites(id) {
-            favorites = favorites.filter(f => f.id !== id);
-            localStorage.setItem('favs', JSON.stringify(favorites));
-            renderFavorites();
-        }
-function renderFavorites() {
-            const favGrid = document.getElementById('favorites-grid');
-            favGrid.innerHTML = '';
-            favorites.forEach(f => {
-                favGrid.innerHTML += `
-                    <div class="card">
-                        <img src="${f.img}" alt="${f.name}">
-                        <h3>${f.name}</h3>
-                        <button class="remove-btn" onclick="removeFromFavorites(${f.id})">Remove</button>
-                    </div>
-                `;
-            });
-        }
-        function submitReview() {
-            const reviewerName = document.getElementById('reviewer-name').value.trim();
-            const reviewText = document.getElementById('review-text').value.trim();
-            if (reviewerName && reviewText) {
-                const newReview = {
-                    name: reviewerName,
-                    text: reviewText
-                };
-                reviews.push(newReview);
-                localStorage.setItem('reviews', JSON.stringify(reviews));
-                renderReviews();
-                document.getElementById('reviewer-name').value = '';
-                document.getElementById('review-text').value = '';
-            }
-        }
-        function renderReviews() {
-            const reviewContainer = document.getElementById('reviews-container');
-            reviewContainer.innerHTML = '';
-            reviews.forEach(review => {
-                reviewContainer.innerHTML += `
-                    <div class="review">
-                        <p><strong>${review.name}:</strong> "${review.text}"</p>
-                    </div>
-                `;
-            });
-        }
-        renderDestinations();
+  <nav>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+    <a href="/search?q=tokyo">Search</a>
+    <a href="/item/1">Item</a>
+    <a href="/api/info">API Info</a>
+    <a href="/test">API Test Page</a>
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+    <button onclick="logout()">Logout</button>
+  </nav>
+
+  <header>
+    <h1>Travel Planner</h1>
+    <p>Explore destinations and plan your next adventure.</p>
+  </header>
+
+  <section>
+    <h2>Browse Destinations</h2>
+    <div id="category-buttons" class="filter-buttons">
+    </div>
+
+    <div id="destinations-grid" class="grid-container"></div>
+  </section>
+
+  <section id="favorites-section" class="favorites-section">
+    <h2>My Favorite Destinations</h2>
+    <div id="favorites-grid" class="grid-container"></div>
+  </section>
+
+  <section id="reviews-section" class="reviews-section">
+    <h2>Traveler Reviews</h2>
+    <div id="reviews-container"></div>
+
+    <div class="review-form">
+      <h3>Share your experience:</h3>
+      <input type="text" id="reviewer-name" placeholder="Your Name" required>
+      <textarea id="review-text" placeholder="Write your review..." rows="4" required></textarea>
+      <button onclick="submitReview()">Submit Review</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-text">
+      <h2>Worldwide Group Tours & European River Cruises</h2>
+      <p>2026 Christmas market river cruises now available to book.</p>
+    </div>
+  </footer>
+
+  <script>
+    let destinations = [];
+    let favorites = JSON.parse(localStorage.getItem("favs")) || [];
+    let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
+
+    // -----------------------------
+    // ✅ Utility: защита от вставки HTML в reviews
+    // -----------------------------
+    function escapeHTML(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // -----------------------------
+    // 2) ЗАГРУЗКА ДАННЫХ С BACKEND
+    // -----------------------------
+    async function loadDestinations() {
+      try {
+        const res = await fetch("/api/items"); // ✅ получаем данные из MongoDB
+        if (!res.ok) throw new Error("Failed to load destinations");
+        destinations = await res.json();
+
+        // ✅ Генерируем категории из MongoDB (вместо хардкода)
+        renderCategoryButtons();
+
+        // Рендер после загрузки
+        renderDestinations("all");
         renderFavorites();
         renderReviews();
-        async function logout() {
-          const res = await fetch('/logout', { method: 'POST' });
-          if (res.ok) window.location.href = '/';
-        }
-    </script>
+      } catch (err) {
+        console.error(err);
+
+        const btns = document.getElementById("category-buttons");
+        if (btns) btns.innerHTML = "";
+
+        const grid = document.getElementById("destinations-grid");
+        grid.innerHTML = `<p style="color:red;">Error loading destinations from API.</p>`;
+      }
+    }
+    function renderCategoryButtons() {
+      const container = document.getElementById("category-buttons");
+      if (!container) return;
+
+      const categories = Array.from(
+        new Set(destinations.map(d => d.category).filter(Boolean))
+      ).sort();
+
+      container.innerHTML = `<button onclick="filterDestinations('all')">All</button>`;
+
+      categories.forEach(cat => {
+        const safeCat = String(cat).replace(/'/g, "\\'");
+        container.innerHTML += `<button onclick="filterDestinations('${safeCat}')">${cat}</button>`;
+      });
+    }
+
+    // -----------------------------
+    // 3) РЕНДЕР DESTINATIONS
+    // -----------------------------
+    function renderDestinations(filter = "all") {
+      const grid = document.getElementById("destinations-grid");
+      grid.innerHTML = "";
+
+      const filtered =
+        filter === "all"
+          ? destinations
+          : destinations.filter((d) => d.category === filter);
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<p>No destinations found for this category.</p>`;
+        return;
+      }
+
+      filtered.forEach((d) => {
+        const descriptionText = d.description || "No description provided.";
+
+        grid.innerHTML += `
+          <div class="card">
+        <img src="${d.img || 'https://via.placeholder.com/800x500?text=No+Image'}"alt="${d.name || 'Destination'}"onerror="this.onerror=null; this.src='https://via.placeholder.com/800x500?text=No+Image';"/>
+            <div class="card-content">
+              <h3>${d.name || "Untitled Destination"}</h3>
+              <p><strong>Category:</strong> ${d.category || "-"}</p>
+              <p><strong>Location:</strong> ${d.location || "-"}</p>
+              <p><strong>Price:</strong> $${d.price ?? "-"}</p>
+              <p><strong>Rating:</strong> ${d.rating ?? "-"}/5</p>
+              <p>${descriptionText}</p>
+              <button onclick="addToFavorites('${d._id}')">❤ Save</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function filterDestinations(cat) {
+      renderDestinations(cat);
+    }
+
+    // -----------------------------
+    // 4) FAVORITES (localStorage)
+    // -----------------------------
+    function addToFavorites(id) {
+      const item = destinations.find((d) => d._id === id);
+      if (!item) return;
+
+      if (!favorites.find((f) => f._id === id)) {
+        favorites.push(item);
+        localStorage.setItem("favs", JSON.stringify(favorites));
+        renderFavorites();
+      }
+    }
+
+    function removeFromFavorites(id) {
+      favorites = favorites.filter((f) => f._id !== id);
+      localStorage.setItem("favs", JSON.stringify(favorites));
+      renderFavorites();
+    }
+
+    function renderFavorites() {
+      const favGrid = document.getElementById("favorites-grid");
+      favGrid.innerHTML = "";
+
+      if (favorites.length === 0) {
+        favGrid.innerHTML = `<p>No favorites yet. Click ❤ Save to add.</p>`;
+        return;
+      }
+
+      favorites.forEach((f) => {
+        favGrid.innerHTML += `
+          <div class="card">
+            <img src="${f.img || ""}" alt="${f.name || "Favorite"}">
+            <h3>${f.name || "-"}</h3>
+            <p>${f.location || ""}</p>
+            <button class="remove-btn" onclick="removeFromFavorites('${f._id}')">Remove</button>
+          </div>
+        `;
+      });
+    }
+
+    // -----------------------------
+    // 5) REVIEWS (localStorage)
+    // -----------------------------
+    function submitReview() {
+      const reviewerName = document.getElementById("reviewer-name").value.trim();
+      const reviewText = document.getElementById("review-text").value.trim();
+
+      if (reviewerName && reviewText) {
+        const newReview = {
+          name: reviewerName,
+          text: reviewText
+        };
+
+        reviews.push(newReview);
+        localStorage.setItem("reviews", JSON.stringify(reviews));
+        renderReviews();
+
+        document.getElementById("reviewer-name").value = "";
+        document.getElementById("review-text").value = "";
+      }
+    }
+
+    function renderReviews() {
+      const reviewContainer = document.getElementById("reviews-container");
+      reviewContainer.innerHTML = "";
+
+      if (reviews.length === 0) {
+        reviewContainer.innerHTML = `<p>No reviews yet. Be the first!</p>`;
+        return;
+      }
+
+      reviews.forEach((review) => {
+        // ✅ защита: экранируем HTML
+        const safeName = escapeHTML(review.name);
+        const safeText = escapeHTML(review.text);
+
+        reviewContainer.innerHTML += `
+          <div class="review">
+            <p><strong>${safeName}:</strong> "${safeText}"</p>
+          </div>
+        `;
+      });
+    }
+
+    // -----------------------------
+    // 6) LOGOUT
+    // -----------------------------
+    async function logout() {
+      const res = await fetch("/logout", { method: "POST" });
+      if (res.ok) window.location.href = "/";
+    }
+
+    // -----------------------------
+    // 7) START PAGE
+    // -----------------------------
+    loadDestinations(); // ✅ загрузка MongoDB данных при старте
+  </script>
 </body>
 </html>
