@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Travel Planner - Destinations</title>
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css" />
 </head>
 
 <body>
@@ -16,7 +16,7 @@
     <a href="/search?q=tokyo">Search</a>
     <a href="/item/1">Item</a>
     <a href="/api/info">API Info</a>
-    <a href="/test">API Test Page</a>
+    <a href="/test">Role Test Panel</a>
     <a href="/login">Login</a>
     <a href="/register">Register</a>
     <button onclick="logout()">Logout</button>
@@ -29,9 +29,7 @@
 
   <section>
     <h2>Browse Destinations</h2>
-    <div id="category-buttons" class="filter-buttons">
-    </div>
-
+    <div id="category-buttons" class="filter-buttons"></div>
     <div id="destinations-grid" class="grid-container"></div>
   </section>
 
@@ -46,7 +44,7 @@
 
     <div class="review-form">
       <h3>Share your experience:</h3>
-      <input type="text" id="reviewer-name" placeholder="Your Name" required>
+      <input type="text" id="reviewer-name" placeholder="Your Name" required />
       <textarea id="review-text" placeholder="Write your review..." rows="4" required></textarea>
       <button onclick="submitReview()">Submit Review</button>
     </div>
@@ -65,7 +63,7 @@
     let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
 
     // -----------------------------
-    // ✅ Utility: защита от вставки HTML в reviews
+    // ✅ Utility: XSS safe text
     // -----------------------------
     function escapeHTML(str) {
       return String(str)
@@ -77,31 +75,36 @@
     }
 
     // -----------------------------
-    // 2) ЗАГРУЗКА ДАННЫХ С BACKEND
+    // ✅ Utility: safe image
+    // -----------------------------
+    function safeImageUrl(url) {
+      const u = (url && String(url).trim()) ? String(url).trim() : "";
+      // If empty → placeholder immediately
+      return u || "https://via.placeholder.com/800x500?text=No+Image";
+    }
+
+    // -----------------------------
+    // ✅ Load from backend MongoDB
     // -----------------------------
     async function loadDestinations() {
       try {
-        const res = await fetch("/api/items"); // ✅ получаем данные из MongoDB
-        if (!res.ok) throw new Error("Failed to load destinations");
+        const res = await fetch("/api/items");
+        if (!res.ok) throw new Error(await res.text());
         destinations = await res.json();
 
-        // ✅ Генерируем категории из MongoDB (вместо хардкода)
         renderCategoryButtons();
-
-        // Рендер после загрузки
         renderDestinations("all");
         renderFavorites();
         renderReviews();
       } catch (err) {
         console.error(err);
-
         const btns = document.getElementById("category-buttons");
         if (btns) btns.innerHTML = "";
-
         const grid = document.getElementById("destinations-grid");
-        grid.innerHTML = `<p style="color:red;">Error loading destinations from API.</p>`;
+        if (grid) grid.innerHTML = `<p style="color:red;">Error loading destinations from API.</p>`;
       }
     }
+
     function renderCategoryButtons() {
       const container = document.getElementById("category-buttons");
       if (!container) return;
@@ -114,15 +117,17 @@
 
       categories.forEach(cat => {
         const safeCat = String(cat).replace(/'/g, "\\'");
-        container.innerHTML += `<button onclick="filterDestinations('${safeCat}')">${cat}</button>`;
+        container.innerHTML += `<button onclick="filterDestinations('${safeCat}')">${escapeHTML(cat)}</button>`;
       });
     }
 
     // -----------------------------
-    // 3) РЕНДЕР DESTINATIONS
+    // ✅ Render Destinations (fixed layout)
     // -----------------------------
     function renderDestinations(filter = "all") {
       const grid = document.getElementById("destinations-grid");
+      if (!grid) return;
+
       grid.innerHTML = "";
 
       const filtered =
@@ -136,18 +141,29 @@
       }
 
       filtered.forEach((d) => {
-        const descriptionText = d.description || "No description provided.";
+        const name = escapeHTML(d.name || "Untitled Destination");
+        const category = escapeHTML(d.category || "-");
+        const location = escapeHTML(d.location || "-");
+        const description = escapeHTML(d.description || "No description provided.");
+        const price = (d.price ?? "-");
+        const rating = (d.rating ?? "-");
+        const imgSrc = safeImageUrl(d.img);
 
         grid.innerHTML += `
           <div class="card">
-        <img src="${d.img || 'https://via.placeholder.com/800x500?text=No+Image'}"alt="${d.name || 'Destination'}"onerror="this.onerror=null; this.src='https://via.placeholder.com/800x500?text=No+Image';"/>
+            <img
+              src="${imgSrc}"
+              alt="${name}"
+              loading="lazy"
+              onerror="this.onerror=null; this.src='https://via.placeholder.com/800x500?text=No+Image';"
+            />
             <div class="card-content">
-              <h3>${d.name || "Untitled Destination"}</h3>
-              <p><strong>Category:</strong> ${d.category || "-"}</p>
-              <p><strong>Location:</strong> ${d.location || "-"}</p>
-              <p><strong>Price:</strong> $${d.price ?? "-"}</p>
-              <p><strong>Rating:</strong> ${d.rating ?? "-"}/5</p>
-              <p>${descriptionText}</p>
+              <h3>${name}</h3>
+              <p><strong>Category:</strong> ${category}</p>
+              <p><strong>Location:</strong> ${location}</p>
+              <p><strong>Price:</strong> $${price}</p>
+              <p><strong>Rating:</strong> ${rating}/5</p>
+              <p class="desc">${description}</p>
               <button onclick="addToFavorites('${d._id}')">❤ Save</button>
             </div>
           </div>
@@ -160,7 +176,7 @@
     }
 
     // -----------------------------
-    // 4) FAVORITES (localStorage)
+    // ✅ Favorites (localStorage)
     // -----------------------------
     function addToFavorites(id) {
       const item = destinations.find((d) => d._id === id);
@@ -181,6 +197,8 @@
 
     function renderFavorites() {
       const favGrid = document.getElementById("favorites-grid");
+      if (!favGrid) return;
+
       favGrid.innerHTML = "";
 
       if (favorites.length === 0) {
@@ -189,31 +207,37 @@
       }
 
       favorites.forEach((f) => {
+        const name = escapeHTML(f.name || "-");
+        const location = escapeHTML(f.location || "");
+        const imgSrc = safeImageUrl(f.img);
+
         favGrid.innerHTML += `
           <div class="card">
-            <img src="${f.img || ""}" alt="${f.name || "Favorite"}">
-            <h3>${f.name || "-"}</h3>
-            <p>${f.location || ""}</p>
-            <button class="remove-btn" onclick="removeFromFavorites('${f._id}')">Remove</button>
+            <img
+              src="${imgSrc}"
+              alt="${name}"
+              loading="lazy"
+              onerror="this.onerror=null; this.src='https://via.placeholder.com/800x500?text=No+Image';"
+            />
+            <div class="card-content">
+              <h3>${name}</h3>
+              <p>${location}</p>
+              <button class="remove-btn" onclick="removeFromFavorites('${f._id}')">Remove</button>
+            </div>
           </div>
         `;
       });
     }
 
     // -----------------------------
-    // 5) REVIEWS (localStorage)
+    // ✅ Reviews (localStorage)
     // -----------------------------
     function submitReview() {
       const reviewerName = document.getElementById("reviewer-name").value.trim();
       const reviewText = document.getElementById("review-text").value.trim();
 
       if (reviewerName && reviewText) {
-        const newReview = {
-          name: reviewerName,
-          text: reviewText
-        };
-
-        reviews.push(newReview);
+        reviews.push({ name: reviewerName, text: reviewText });
         localStorage.setItem("reviews", JSON.stringify(reviews));
         renderReviews();
 
@@ -224,6 +248,8 @@
 
     function renderReviews() {
       const reviewContainer = document.getElementById("reviews-container");
+      if (!reviewContainer) return;
+
       reviewContainer.innerHTML = "";
 
       if (reviews.length === 0) {
@@ -232,7 +258,6 @@
       }
 
       reviews.forEach((review) => {
-        // ✅ защита: экранируем HTML
         const safeName = escapeHTML(review.name);
         const safeText = escapeHTML(review.text);
 
@@ -245,7 +270,7 @@
     }
 
     // -----------------------------
-    // 6) LOGOUT
+    // ✅ Logout
     // -----------------------------
     async function logout() {
       const res = await fetch("/logout", { method: "POST" });
@@ -253,9 +278,11 @@
     }
 
     // -----------------------------
-    // 7) START PAGE
+    // ✅ Start
     // -----------------------------
-    loadDestinations(); // ✅ загрузка MongoDB данных при старте
+    loadDestinations();
+    renderFavorites();
+    renderReviews();
   </script>
 </body>
 </html>

@@ -69,7 +69,7 @@
         <a href="/search?q=tokyo">Search</a>
         <a href="/item/1">Item</a>
         <a href="/api/info">API Info</a>
-        <a href="/test">API Test Page</a>
+        <a href="/test">Role Test Panel</a>
         <a href="/login">Login</a> <!-- Добавили -->
         <a href="/register">Register</a> <!-- Добавили -->
         <button onclick="logout()">Logout</button> <!-- Добавили -->
@@ -79,19 +79,59 @@
         <p>Learn more about our vision, our team, and our technical journey.</p>
     </header>
     <section class="about">
-        <h2>About The Project</h2>
-        <p>The Travel Planner is an interactive web application designed to simplify the complex process of organizing trips. Our mission is to provide users with a seamless platform where they can discover breathtaking destinations, manage their budgets, and create memories that last a lifetime.</p>
+        <h2>About the Project</h2>
+        <p>
+          <strong>Travel Planner</strong> is a full-stack web application developed to simplify the process of planning and managing travel experiences.
+          The platform allows users to explore destinations, manage personalized content, and securely interact with the system through authenticated access.
+          The project follows modern backend and security best practices and is designed as a production-ready application.
+        </p>
+      
         <h3>Current Development Stage</h3>
-        <p>At this stage of development (Assignment 1 - Part 2), we have successfully implemented:</p>
+        <p>
+          At the current stage (Final Project), the application has evolved from earlier assignments into a complete and secure web system.
+          The following core features have been successfully implemented:
+        </p>
+      
         <ul>
-            <li><strong>Dynamic Routing:</strong> Utilizing Express.js to handle multiple pages and navigation flawlessly.</li>
-            <li><strong>Backend Processing:</strong> A robust server-side logic that captures user inquiries via a custom-built contact form.</li>
-            <li><strong>Data Management:</strong> Implementation of file system modules to securely store user feedback in JSON format for future analysis.</li>
-            <li><strong>Interactive UI:</strong> A responsive design featuring destination filtering and a personalized "Favorites" system to enhance user engagement.</li>
+          <li>
+            <strong>Modular Backend Architecture:</strong>
+            Built with Node.js and Express.js using a clear separation of routes, models, middleware, and configuration files.
+          </li>
+      
+          <li>
+            <strong>Database Integration:</strong>
+            MongoDB is used as the primary database with realistic domain-based data for destinations, including relationships and ownership control.
+          </li>
+      
+          <li>
+            <strong>Authentication & Security:</strong>
+            User authentication is implemented using sessions and bcrypt password hashing, ensuring secure login and logout functionality.
+          </li>
+      
+          <li>
+            <strong>Authorization & Roles:</strong>
+            Role-based access control (RBAC) is implemented with two roles: <em>user</em> and <em>admin</em>.
+            Users can modify only their own data, while admins have extended management privileges.
+          </li>
+      
+          <li>
+            <strong>Protected API Endpoints:</strong>
+            All write operations are secured using middleware to prevent unauthorized access and enforce ownership rules.
+          </li>
+      
+          <li>
+            <strong>Interactive Frontend:</strong>
+            A responsive user interface that dynamically loads data from the backend API, supports filtering, favorites, and client-side persistence.
+          </li>
         </ul>
-        <h3>Future Goals</h3>
-        <p>Moving forward, our team is focused on integrating budget calculators, real-time weather updates for destinations, and a comprehensive search engine to further personalize the travel planning experience.</p>
-    </section>
+      
+        <h3>Future Improvements</h3>
+        <p>
+          Future development plans include advanced search and filtering, budget calculation tools, real-time data integration (such as weather APIs),
+          and further UI enhancements to improve scalability and user experience.
+        </p>
+      </section>
+      
 <section class="team">
         <h2>Our Dedicated Team</h2>
         <ul>

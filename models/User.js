@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  // NEW: role for RBAC
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
 });
 
 // Хэшируем пароль перед сохранением (async версия без next)

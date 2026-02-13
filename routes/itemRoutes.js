@@ -1,92 +1,121 @@
 // routes/itemRoutes.js
 const express = require('express');
 const router = express.Router();
-const Destination = require('../models/Destination'); // Переходим на mongoose модель
-const { body, validationResult } = require('express-validator'); // Для валидации
-const isAuthenticated = require('../middleware/auth'); // Новый middleware, см. ниже
+const Destination = require('../models/Destination');
+const { body, validationResult } = require('express-validator');
+const { isAuthenticated, requireOwnerOrAdmin } = require('../middleware/auth');
 
-// 1. GET ALL (с Сортировкой и Проекцией)
+// GET ALL (оставляем как есть)
 router.get('/', async (req, res) => {
-    try {
-        const { category, sort, fields } = req.query; // Получаем параметры из ссылки
-        let query = {};
-        if (category) query.category = category;
-        let findQuery = Destination.find(query);
-        // --- ЛОГИКА СОРТИРОВКИ (SORTING) ---
-        if (sort) {
-            findQuery = findQuery.sort({ [sort]: 1 });
-        }
-        // --- ЛОГИКА ПРОЕКЦИИ (PROJECTION) ---
-        if (fields) {
-            const projection = fields.split(',').reduce((acc, f) => { acc[f.trim()] = 1; return acc; }, {});
-            findQuery = findQuery.select(projection);
-        }
-        const results = await findQuery.exec();
-        res.status(200).json(results);
-    } catch (err) {
-        res.status(500).json({ error: "Database error" });
+  try {
+    const { category, sort, fields } = req.query;
+    let query = {};
+    if (category) query.category = category;
+
+    let findQuery = Destination.find(query);
+
+    if (sort) findQuery = findQuery.sort({ [sort]: 1 });
+
+    if (fields) {
+      const projection = fields.split(',').reduce((acc, f) => {
+        acc[f.trim()] = 1;
+        return acc;
+      }, {});
+      findQuery = findQuery.select(projection);
     }
+
+    const results = await findQuery.exec();
+    res.status(200).json(results);
+  } catch (err) {
+    res.status(500).json({ error: "Database error" });
+  }
 });
-// 2. GET BY ID (Получение одной записи)
+
+// GET BY ID
 router.get('/:id', async (req, res) => {
-    try {
-        const item = await Destination.findById(req.params.id);
-        if (!item) return res.status(404).json({ error: "Not found" });
-        res.status(200).json(item);
-    } catch (err) {
-        res.status(500).json({ error: "Server error" });
-    }
+  try {
+    const item = await Destination.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: "Not found" });
+    res.status(200).json(item);
+  } catch (err) {
+    // invalid ObjectId
+    return res.status(400).json({ error: "Invalid ID" });
+  }
 });
-// 3. POST (Оставляем как есть + валидация + auth)
-router.post('/', isAuthenticated, [
-  body('name').trim().notEmpty().withMessage('Name required'),
-  body('category').trim().notEmpty().withMessage('Category required'),
-  body('description').optional().trim(),
-  body('img').optional().trim(),
-  body('location').optional().trim(),
-  body('price').optional().isNumeric(),
-  body('rating').optional().isNumeric(),
-  body('activities').optional().isArray()
-], async (req, res) => {
+
+// POST (auth + validation) + ownerId
+router.post(
+  '/',
+  isAuthenticated,
+  [
+    body('name').trim().notEmpty().withMessage('Name required'),
+    body('category').trim().notEmpty().withMessage('Category required'),
+    body('description').optional().trim(),
+    body('img').optional().trim(),
+    body('location').optional().trim(),
+    body('price').optional().isNumeric(),
+    body('rating').optional().isNumeric(),
+    body('activities').optional().isArray(),
+  ],
+  async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
     try {
-        const newItem = new Destination(req.body);
-        const savedItem = await newItem.save();
-        res.status(201).json(savedItem);
+      const payload = { ...req.body, ownerId: req.session.userId }; // NEW
+      const savedItem = await new Destination(payload).save();
+      res.status(201).json(savedItem);
     } catch (err) {
-        res.status(500).json({ error: "Error creating" });
+      res.status(500).json({ error: "Error creating" });
     }
-});
-// 4. PUT /api/items/:id - Обновление + валидация + auth
-router.put('/:id', isAuthenticated, [
-  body('name').optional().trim().notEmpty(),
-  body('category').optional().trim().notEmpty(),
-  // Добавь для других полей
-], async (req, res) => {
+  }
+);
+
+// PUT (owner/admin)
+router.put(
+  '/:id',
+  requireOwnerOrAdmin, // NEW
+  [
+    body('name').optional().trim().notEmpty(),
+    body('category').optional().trim().notEmpty(),
+    body('description').optional().trim(),
+    body('img').optional().trim(),
+    body('location').optional().trim(),
+    body('price').optional().isNumeric(),
+    body('rating').optional().isNumeric(),
+    body('activities').optional().isArray(),
+  ],
+  async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
     try {
-        const updates = req.body;
-        const result = await Destination.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true });
-        if (!result) return res.status(404).json({ error: "Not found" });
-        res.status(200).json(result);
+      const updates = { ...req.body };
+      delete updates.ownerId; // NEVER allow changing owner from client
+
+      const result = await Destination.findByIdAndUpdate(
+        req.params.id,
+        { $set: updates },
+        { new: true }
+      );
+
+      if (!result) return res.status(404).json({ error: "Not found" });
+      res.status(200).json(result);
     } catch (err) {
-        res.status(500).json({ error: "Update failed" });
+      return res.status(400).json({ error: "Invalid ID" });
     }
+  }
+);
+
+// DELETE (owner/admin)
+router.delete('/:id', requireOwnerOrAdmin, async (req, res) => {
+  try {
+    const result = await Destination.findByIdAndDelete(req.params.id);
+    if (!result) return res.status(404).json({ error: "Not found" });
+    res.status(200).json({ message: "Deleted" });
+  } catch (err) {
+    return res.status(400).json({ error: "Invalid ID" });
+  }
 });
-// 5. DELETE /api/items/:id (Удаление одного) + auth
-router.delete('/:id', isAuthenticated, async (req, res) => {
-    try {
-        const result = await Destination.findByIdAndDelete(req.params.id);
-        if (!result) return res.status(404).json({ error: "Not found" });
-        res.status(200).json({ message: "Deleted" });
-    } catch (err) {
-        res.status(500).json({ error: "Delete failed" });
-    }
-});
+
 module.exports = router;

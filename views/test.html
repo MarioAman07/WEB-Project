@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Full API Defense Panel</title>
+    <title>User Panel</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
         <a href="/search?q=tokyo">Search</a>
         <a href="/item/1">Item</a>
         <a href="/api/info">API Info</a>
-        <a href="/test">API Test Page</a>
+        <a href="/test">Role Test Panel</a>
         <a href="/login">Login</a>
         <a href="/register">Register</a>
         <button onclick="logout()">Logout</button>
@@ -50,6 +50,21 @@
             <button id="btn-submit" class="btn-create" onclick="handleFormSubmit()">Create (POST)</button>
             <button id="btn-cancel" class="btn-cancel" onclick="resetForm()">Cancel</button>
         </section>
+
+        <section class="panel" style="background-color:#e8f5e9; border-color:#a5d6a7;">
+            <h2> Admin only: Promote user to admin</h2>
+            <p>This action is allowed only for ADMIN.</p>
+        
+            <div class="form-row">
+                <input type="text" id="promote-username" placeholder="Username to promote">
+                <button class="btn-lab" onclick="promoteUser()">Promote</button>
+                <button class="btn-delete-all" style="float:none;" onclick="demoteUser()">Demote to user</button>
+            </div>
+        
+            <div id="promote-result" class="lab-panel">// Result will appear here</div>
+        </section>
+        
+
         <section class="panel" style="background-color: #fff3e0; border-color: #ffe0b2;">
             <h2>2. API Laboratory (Test Specific Requirements)</h2>
             <p>Use this section to prove specific grading criteria.</p>
@@ -262,6 +277,65 @@
           const res = await fetch('/logout', { method: 'POST' });
           if (res.ok) window.location.href = '/';
         }
+
+        // ---- ADMIN: Promote user to admin ----
+async function promoteUser() {
+    const username = document.getElementById('promote-username').value.trim();
+    if (!username) {
+        alert('Enter username');
+        return;
+    }
+
+    try {
+        const res = await fetch('/admin/promote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+            document.getElementById('promote-result').innerText = text;
+            return;
+        }
+
+        document.getElementById('promote-result').innerText =
+            JSON.stringify(JSON.parse(text), null, 2);
+    } catch (err) {
+        document.getElementById('promote-result').innerText = err.message;
+    }
+}
+
+// ---- ADMIN: Demote admin to user ----
+async function demoteUser() {
+    const username = document.getElementById('promote-username').value.trim();
+    if (!username) {
+        alert('Enter username');
+        return;
+    }
+
+    try {
+        const res = await fetch('/admin/demote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+
+        const text = await res.text();
+
+        if (!res.ok) {
+            document.getElementById('promote-result').innerText = text;
+            return;
+        }
+
+        document.getElementById('promote-result').innerText =
+            JSON.stringify(JSON.parse(text), null, 2);
+    } catch (err) {
+        document.getElementById('promote-result').innerText = err.message;
+    }
+}
+
     </script>
 </body>
 </html>

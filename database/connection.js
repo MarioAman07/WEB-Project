@@ -17,7 +17,7 @@ async function connectDB() {
     console.log("Connected successfully to MongoDB");
     db = client.db(dbName);
     // Подключаем mongoose для User и sessions
-    await mongoose.connect(url + '/' + dbName);
+    await mongoose.connect(url);
     console.log("Mongoose connected");
   } catch (err) {
     console.error("MongoDB connection error:", err);
@@ -31,3 +31,4 @@ function getDb() {
   return db;
 }
 module.exports = { connectDB, getDb };
+ 

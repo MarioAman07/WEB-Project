@@ -2,6 +2,8 @@
 const mongoose = require('mongoose');
 
 const destinationSchema = new mongoose.Schema({
+  // NEW: owner of the record
+  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true },
   category: { type: String, required: true },
   description: String,
